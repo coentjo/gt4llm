@@ -21,3 +21,15 @@ Metacello new
 ```
 
 Have fun!
+
+--- 
+In Coen's fork I will add some little tools (like views in GT) that I use. To use it, use the script below instead of the other one: 
+
+```st
+Metacello new
+	repository: 'github://coentjo/gt4llm:main/src';
+	baseline: 'Gt4Llm';
+	load.
+#BaselineOfGt4Llm asClass loadLepiter
+```
+
