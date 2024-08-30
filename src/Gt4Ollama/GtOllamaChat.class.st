@@ -7,6 +7,39 @@ Class {
 	#category : #'Gt4Ollama-Chat'
 }
 
+{ #category : #'as yet unclassified' }
+GtOllamaChat >> asMarkdown [
+	| stream |
+	stream := WriteStream on: String new.
+	self asMarkdown: stream.
+	^ stream contents
+]
+
+{ #category : #'as yet unclassified' }
+GtOllamaChat >> asMarkdown: stream [
+	self messages reversed
+		do: [ :msg | 
+			stream cr
+				nextPutAll: '# ';
+				nextPutAll: msg role asString;
+				cr;
+				cr;
+				nextPutAll: msg content asString;
+				cr;
+				cr ]
+]
+
+{ #category : #'as yet unclassified' }
+GtOllamaChat >> gtTextFor: aView [
+	<gtView>
+	^ aView text
+		title: 'Markdown';
+		priority: 4;
+		text: [ self asMarkdown ];
+		updateWhen: GtOpenAIThreadRunAnnouncement in: self announcer;
+		actionUpdateButton
+]
+
 { #category : #accessing }
 GtOllamaChat >> gtTriggerAssistantActionFor: anAction [
 	<gtAction>
