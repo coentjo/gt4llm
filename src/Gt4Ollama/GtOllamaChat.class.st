@@ -8,6 +8,11 @@ Class {
 }
 
 { #category : #'as yet unclassified' }
+GtOllamaChat class >> chatWithLlama [
+	^ self new model: 'llama3.1'
+]
+
+{ #category : #'as yet unclassified' }
 GtOllamaChat >> asMarkdown [
 	| stream |
 	stream := WriteStream on: String new.
