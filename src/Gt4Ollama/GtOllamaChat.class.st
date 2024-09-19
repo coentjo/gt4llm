@@ -72,6 +72,11 @@ GtOllamaChat >> initializeMessages [
 	messages := GtLlmMessagesGroup new
 ]
 
+{ #category : #'as yet unclassified' }
+GtOllamaChat >> llmFeedbackOnPlan: aText [
+	^ self sendMessage: (PromptTemplates llmFeedbackOnPlan: aText)
+]
+
 { #category : #accessing }
 GtOllamaChat >> sendMessage: aMessage [
 	messages
