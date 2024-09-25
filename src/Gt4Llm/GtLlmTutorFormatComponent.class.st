@@ -8,7 +8,9 @@ Class {
 		'example',
 		'priority',
 		'tutor',
-		'referencingActions'
+		'referencingActions',
+		'definingMethod',
+		'type'
 	],
 	#category : #'Gt4Llm-Tutor'
 }
@@ -44,9 +46,7 @@ GtLlmTutorFormatComponent >> asInstruction [
 
 { #category : #accessing }
 GtLlmTutorFormatComponent >> asJsonSchema [
-	^ {'type'
-			-> {'string'.
-					'null'}.
+	^ {'type' -> self type.
 		'description'
 			-> (GtLlmInstructionList new
 					addItem: 'Format: ' , self format;
@@ -54,9 +54,25 @@ GtLlmTutorFormatComponent >> asJsonSchema [
 ' , self example) instructionString} asDictionary
 ]
 
+{ #category : #'as yet unclassified' }
+GtLlmTutorFormatComponent >> beRequired [
+	self type remove: 'null' ifAbsent: [  ]
+]
+
 { #category : #accessing }
 GtLlmTutorFormatComponent >> defaultPriority [
 	^ 10
+]
+
+{ #category : #accessing }
+GtLlmTutorFormatComponent >> defaultType [
+	^ {'string'.
+		'null'}
+]
+
+{ #category : #'as yet unclassified' }
+GtLlmTutorFormatComponent >> definingMethod [
+	^ definingMethod
 ]
 
 { #category : #accessing }
@@ -93,12 +109,22 @@ GtLlmTutorFormatComponent >> gtActionsFor: aView [
 			text: [ :aReference | aReference isOutput ifTrue: [ 'true' ] ifFalse: [ '' ] ]
 ]
 
+{ #category : #'as yet unclassified' }
+GtLlmTutorFormatComponent >> gtDefinitionFor: aView [
+	<gtView>
+	^ aView forward
+		title: 'Definition';
+		priority: 1;
+		object: [ definingMethod ];
+		view: #gtSourceFor:
+]
+
 { #category : #accessing }
 GtLlmTutorFormatComponent >> gtInstructionFor: aView [
 	<gtView>
 	^ aView forward 
 		title: 'Instruction';
-		priority: 1;
+		priority: 2;
 		object: [ self asInstruction ];
 		view: #gtInstructionFor:
 ]
@@ -109,7 +135,11 @@ GtLlmTutorFormatComponent >> initialize [
 	
 	priority := self defaultPriority.
 	
-	referencingActions := OrderedCollection new
+	type := self defaultType asOrderedCollection.
+	
+	referencingActions := OrderedCollection new.
+	
+	definingMethod := (thisContext stack at: 3) blocDefiningMethod
 ]
 
 { #category : #accessing }
@@ -150,4 +180,14 @@ GtLlmTutorFormatComponent >> tutor [
 { #category : #accessing }
 GtLlmTutorFormatComponent >> tutor: anObject [
 	tutor := anObject
+]
+
+{ #category : #accessing }
+GtLlmTutorFormatComponent >> type [
+	^ type
+]
+
+{ #category : #accessing }
+GtLlmTutorFormatComponent >> type: anObject [
+	type := anObject
 ]

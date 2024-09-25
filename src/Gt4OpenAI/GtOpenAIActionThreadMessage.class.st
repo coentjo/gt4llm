@@ -29,12 +29,13 @@ GtOpenAIActionThreadMessage >> contentSummary [
 GtOpenAIActionThreadMessage >> gtActionFor: aView [
 	<gtView>
 	<gtLlmMessageView>
-	self action ifEmpty: [ ^ aView empty ].
+	self action isEmptyOrNil ifTrue: [ ^ aView empty ].
 
 	^ aView textEditor
 		title: 'Action';
 		priority: 3;
-		text: [ self action ]
+		text: [ self action ];
+		actionButtonLabel: 'Action' action: [ :aButton | aButton phlow spawnObject: (self chat tutor actionNamed: self action) ]
 ]
 
 { #category : #accessing }
@@ -63,4 +64,53 @@ GtOpenAIActionThreadMessage >> gtInspectorContentFor: aView [
 		title: 'Content';
 		priority: 5;
 		stencil: [ GtLlmThreadMessageElement new threadMessageViewModel: self asViewModel ]
+]
+
+{ #category : #accessing }
+GtOpenAIActionThreadMessage >> gtPromoteToExampleActionFor: anAction [
+	<gtLlmAction>
+	self isAssistantRole ifFalse: [ ^ anAction noAction ].
+
+	^ anAction dropdown
+		priority: 5;
+		label: 'Promote example';
+		content: [ :aButton | 
+			| action example |
+			action := self chat tutor actionNamed: self action.
+			example := GtLlmTutorActionExample new
+					input: self ancestor contentJson;
+					output: self contentJson.
+			action addExample: example.
+			action persist.
+			example asGtMagritteViewModel asElement ]
+]
+
+{ #category : #accessing }
+GtOpenAIActionThreadMessage >> gtReifyMessageActionFor: anAction [
+	<gtLlmAction>
+	^ anAction dropdown
+		priority: 1;
+		label: 'Reify';
+		content: [ :aButton | 
+			(GtLlmReificationForm new
+				message: self;
+				onAccept: [ :aValue | aButton phlow spawnObject: self chat ]) asElement
+				margin: (BlInsets all: 5) ]
+]
+
+{ #category : #accessing }
+GtOpenAIActionThreadMessage >> gtTextFor: aView [
+	<gtView>
+	<gtLlmMessageView>
+	self textBlock isEmptyOrNil ifTrue: [ ^ aView empty ].
+
+	^ aView textEditor
+		title: 'Text';
+		priority: 2;
+		text: [ self textBlock ]
+]
+
+{ #category : #accessing }
+GtOpenAIActionThreadMessage >> textBlock [
+	^ self contentJson at: 'Text' ifAbsent: [ '' ]
 ]

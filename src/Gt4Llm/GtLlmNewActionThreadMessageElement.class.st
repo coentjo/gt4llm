@@ -52,7 +52,11 @@ GtLlmNewActionThreadMessageElement >> initialize [
 	self initializeToggleGroup.
 	self initializeContentsElement.
 	self initializeToolbar.
-	self addChild: toggleGroup as: #toggle.
+	self
+		addChild: (BrScrollPane new
+				aptitude: BrScrollPaneAptitude;
+				content: toggleGroup)
+		as: #toggle.
 	self addChild: contentsElement as: #contents.
 	self addChild: toolbar as: #toolbar.
 
@@ -173,10 +177,16 @@ GtLlmNewActionThreadMessageElement >> updateToggleGroup [
 			toggleElement
 				when: BrToggleActivatedEvent
 				do: [ :anEvent | 
-					contentsElement text: (anAction format format: {''}).
-					self updateContents: (anAction format format: {''}).
-					self threadMessageViewModel currentAction: anAction ].
-			toggleGroup addToggle: toggleElement ]
+					contentsElement beEditable text: ''.
+					self threadMessageViewModel currentAction: anAction.
+					anAction hasArgument
+						ifFalse: [ contentsElement beReadOnlyWithSelection
+								text: ('' asRopedText
+										attribute: (BrGhostTextAttribute
+												for: (anAction format asRopedText foreground: Color lightGray))) ] ].
+			toggleGroup addToggle: toggleElement ].
+	toggleGroup viewModel toggles
+		ifNotEmpty: [ :aGroupOfToggles | aGroupOfToggles first activate ]
 ]
 
 { #category : #'private - updating' }

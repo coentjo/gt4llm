@@ -10,12 +10,12 @@ Class {
 
 { #category : #accessing }
 GtLlmTutorFormat >> actionComponent [
-	^ (GtLlmTutorFormatComponent new
-				name: 'Action';
-				format: 'Text';
-				example: '```
+	^ GtLlmTutorFormatComponent new beRequired
+		name: 'Action';
+		format: 'Text';
+		example: '```
 Create a draft
-```')
+```'
 ]
 
 { #category : #accessing }
@@ -100,7 +100,17 @@ GtLlmTutorFormat >> gtComponentsFor: aView [
 		items: [ components sorted: [ :a :b | a priority < b priority ] ];
 		column: 'Name' text: #name;
 		column: 'Format' text: #format;
-		column: 'Priority' text: #priority
+		column: 'Priority' text: #priority width: 70;
+		column: 'Actions'
+			stencil: [ :anItem | 
+				BrButton new
+					aptitude: BrGlamorousButtonWithIconAptitude;
+					icon: BrGlamorousVectorIcons cancel;
+					label: 'Remove';
+					action: [ :aButton | 
+						components remove: anItem.
+						aButton phlow fireUpdateWish ] ]
+		width: 70
 ]
 
 { #category : #accessing }

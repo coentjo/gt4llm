@@ -4,18 +4,9 @@ Class {
 	#category : #'Gt4OpenAI-Tutor'
 }
 
-{ #category : #accessing }
-GtOpenAIViewActionTutor >> addChat [
-	| aChat |
-	aChat := GtOpenAIViewActionAssistantChat new
-			assistant: self assistant;
-			actions: actions;
-			tutor: self;
-			responseFormat: self format asJsonSchema;
-			pipeline: pipelineBuilder value.
-	chats add: aChat.
-
-	^ aChat
+{ #category : #'as yet unclassified' }
+GtOpenAIViewActionTutor >> chatClass [
+	^ GtOpenAIViewActionAssistantChat
 ]
 
 { #category : #accessing }
@@ -30,7 +21,6 @@ GtOpenAIViewActionTutor >> generateViewAction [
 		name: 'Generate a Phlow view';
 		priority: 4;
 		description: 'Proposes a sensible Phlow view to the object provided. It should be as minimal as possible, yet still be useful. The view MUST respect the context of the object, and MUST NOT exist yet on the object. The view MUST be of type `textEditor`, `list`, `columnedList`, `tree`, or `columnedTree`.';
-		format: 'Generate a Phlow view';
 		examples: {GtLlmTutorActionExample new
 					input: {'Action' -> 'Generate a Phlow view'.
 							'Object'
@@ -97,6 +87,11 @@ GtOpenAIViewActionTutor >> initializePipeline [
 				isImmutableInstance: true ]
 ]
 
+{ #category : #'as yet unclassified' }
+GtOpenAIViewActionTutor >> messageClass [
+	^ GtOpenAIViewActionThreadMessage
+]
+
 { #category : #accessing }
 GtOpenAIViewActionTutor >> methodFormatComponent [
 	<gtLlmFormatComponent>
@@ -132,7 +127,7 @@ GtOpenAIViewActionTutor >> performCommandAction [
 		name: 'Perform command';
 		priority: 4;
 		description: 'Performs a command provided by the user. May use any properties (object, text, or method itself) to achieve its goal.';
-		format: 'Perform the following command: ';
+		format: 'Perform the following command: {1}';
 		examples: {GtLlmTutorActionExample new
 					input: {'Action' -> 'Perform the following command: Add a column to the view'.
 							'Object'
@@ -170,21 +165,4 @@ gtUniqueItemsFor: aView
 		column: ''Item'' text: [ :eachItem | eachItem gtDisplayText ];
 		column: ''Item occurrence'' text: [ :eachItem | self occurrencesOf: eachItem ];
 		actionUpdateButtonTooltip: ''Update item list'''} asDictionary}
-]
-
-{ #category : #accessing }
-GtOpenAIViewActionTutor >> textFormatComponent [
-	<gtLlmFormatComponent>
-	^ GtLlmTutorFormatComponent new
-		name: 'Text';
-		priority: 2;
-		format: 'Text';
-		example: '```
-This node contains plain text.
-Multiple lines, multiple paragraphs are allowed.
-
-*markup* may also **be used**. `Code` can be highlighted, but code blocks with three tick marks MAY NOT be used.
-
-# Headings exist as well
-```'
 ]

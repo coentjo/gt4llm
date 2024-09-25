@@ -8,10 +8,30 @@ Class {
 		'description',
 		'format',
 		'priority',
-		'tutor'
+		'tutor',
+		'definingMethod'
 	],
 	#category : #'Gt4Llm-Actions'
 }
+
+{ #category : #'as yet unclassified' }
+GtLlmTutorAction >> addExample: anExample [
+	examples add: (anExample action: self)
+]
+
+{ #category : #'as yet unclassified' }
+GtLlmTutorAction >> asExpression [
+	^ self class name asString
+		, ' new
+	name: ''' , self name
+		, ''';
+	priority: ' , self priority asString
+		, ';
+		description: ''' , self description
+		, ''';
+		examples: {' , ('.
+			' join: (self examples collect: #asExpression)) , '}'
+]
 
 { #category : #accessing }
 GtLlmTutorAction >> asInstruction [
@@ -29,6 +49,11 @@ GtLlmTutorAction >> asInstruction [
 { #category : #accessing }
 GtLlmTutorAction >> defaultPriority [
 	^ 10
+]
+
+{ #category : #'as yet unclassified' }
+GtLlmTutorAction >> definingMethod [
+	^ definingMethod
 ]
 
 { #category : #accessing }
@@ -58,7 +83,7 @@ GtLlmTutorAction >> examples [
 
 { #category : #accessing }
 GtLlmTutorAction >> examples: anObject [
-	examples := anObject.
+	examples := anObject asOrderedCollection.
 
 	examples do: [ :anExample | anExample action: self ]
 ]
@@ -112,6 +137,16 @@ GtLlmTutorAction >> formatReferences [
 		sorted: [ :a :b | a priority < b priority ]
 ]
 
+{ #category : #'as yet unclassified' }
+GtLlmTutorAction >> gtDefinitionFor: aView [
+	<gtView>
+	^ aView forward
+		title: 'Definition';
+		priority: 1;
+		object: [ definingMethod ];
+		view: #gtSourceFor:
+]
+
 { #category : #accessing }
 GtLlmTutorAction >> gtDescriptionFor: aView [
 	<gtView>
@@ -146,7 +181,7 @@ GtLlmTutorAction >> gtInstructionFor: aView [
 	<gtView>
 	^ aView forward
 		title: 'Instruction';
-		priority: 1;
+		priority: 2;
 		object: [self asInstruction ];
 		view: #gtInstructionFor:
 ]
@@ -162,12 +197,21 @@ GtLlmTutorAction >> gtOutputFormatReferencesFor: aView [
 		column: 'Format' text: #format
 ]
 
+{ #category : #'as yet unclassified' }
+GtLlmTutorAction >> hasArgument [
+	^ format formatCount > 0
+]
+
 { #category : #accessing }
 GtLlmTutorAction >> initialize [
 	super initialize.
-	
+
 	self priority: self defaultPriority.
-	self examples: OrderedCollection new
+	self examples: OrderedCollection new.
+	self name: ''.
+	self description: ''.
+	
+	definingMethod := (thisContext stack at: 3) blocDefiningMethod
 ]
 
 { #category : #accessing }
@@ -206,6 +250,19 @@ GtLlmTutorAction >> onTutorChanged [
 GtLlmTutorAction >> outputReferences [
 	^ (self examples flatCollect: #outputReferences as: Set)
 		sorted: [ :a :b | a priority < b priority ]
+]
+
+{ #category : #'as yet unclassified' }
+GtLlmTutorAction >> persist [
+	self definingMethod methodClass
+		compile: (RBConfigurableFormatter
+				format: (RBParser
+						parseMethod: self definingMethod selector asString
+								, '
+	<gtLlmTutorAction>
+	^ ' , self asExpression)).
+	definingMethod := self definingMethod methodClass
+			>> self definingMethod selector
 ]
 
 { #category : #accessing }

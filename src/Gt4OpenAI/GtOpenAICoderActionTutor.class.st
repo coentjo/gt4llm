@@ -4,23 +4,24 @@ Class {
 	#category : #'Gt4OpenAI-Tutor'
 }
 
-{ #category : #accessing }
-GtOpenAICoderActionTutor >> addChat [
-	| aChat |
-	aChat := GtOpenAICoderActionAssistantChat new
-			assistant: self assistant;
-			actions: actions;
-			tutor: self;
-			responseFormat: self format asJsonSchema;
-			pipeline: pipelineBuilder value.
-	chats add: aChat.
-
-	^ aChat
+{ #category : #'as yet unclassified' }
+GtOpenAICoderActionTutor >> chatClass [
+	^ GtOpenAICoderActionAssistantChat
 ]
 
 { #category : #accessing }
 GtOpenAICoderActionTutor >> formatName [
 	^ 'Smalltalk method'
+]
+
+{ #category : #'as yet unclassified' }
+GtOpenAICoderActionTutor >> gtNewAction [
+ 	<gtLlmAction>
+ 	^ GtLlmTutorAction new
+ 		name: 'New';
+ 		priority: 1;
+ 		description: 'Foo';
+ 		examples: {}
 ]
 
 { #category : #accessing }
@@ -36,6 +37,11 @@ GtOpenAICoderActionTutor >> initializePipeline [
 		pipelineBuilder: [ GtLlmContext new
 				instance: GtLlmMethodHolder new;
 				isImmutableInstance: true ]
+]
+
+{ #category : #'as yet unclassified' }
+GtOpenAICoderActionTutor >> messageClass [
+	^ GtOpenAICoderActionThreadMessage
 ]
 
 { #category : #accessing }
@@ -59,7 +65,7 @@ GtOpenAICoderActionTutor >> performCommandAction [
 		name: 'Perform command';
 		priority: 4;
 		description: 'Performs a command provided by the user. May use any properties (text, renames, or method itself) to achieve its goal.';
-		format: 'Perform the following command: ';
+		format: 'Perform the following command: {1}';
 		examples: {GtLlmTutorActionExample new
 					input: {'Action' -> 'Perform the following command: Reorder the method arguments'.
 							'Smalltalk method'
@@ -99,7 +105,6 @@ GtOpenAICoderActionTutor >> refactoringAction [
 		name: 'Propose refactoring for method';
 		priority: 4;
 		description: 'Proposes a refactoring for the method. The method should be rewritten appropriately where necessary while preserving functionality. A textual description of the changes may also be added if deemed necessary.';
-		format: 'Propose refactoring for method';
 		examples: {GtLlmTutorActionExample new
 					input: {'Action' -> 'Propose refactoring for method'.
 							'Smalltalk method'
@@ -139,7 +144,6 @@ GtOpenAICoderActionTutor >> renameAction [
 		name: 'Propose renames for method';
 		priority: 4;
 		description: 'Proposes a sensible number of alternative names for the method (less than ten, but more than one). The number of method parameters should stay the same across renames, and method that do not take arguments should not have a trailing semicolon (e.g. `helloWorld` instead of `helloWorld:`). Always return the action name, renames, and method.';
-		format: 'Propose renames for method';
 		examples: {GtLlmTutorActionExample new
 					input: {'Action' -> 'Propose renames for method'.
 							'Smalltalk method'
@@ -147,44 +151,44 @@ GtOpenAICoderActionTutor >> renameAction [
 addAction: anAction
 	actions add: anAction
 '} asDictionary;
-					output: {'Action' -> 'Propose renames for method'.
-							'Text' -> nil.
-							'Renames'
-								-> '{"type": "method", "original": "increment", "proposals": ["extendActions:", "appendAction:", "includeAction:"]}'.
-							'Smalltalk method'
+					output: {'Smalltalk method'
 								-> 'ActionClass
 addAction: anAction
 	actions add: anAction
-'} asDictionary.
+'.
+							'Renames'
+								-> '{"type": "method", "original": "increment", "proposals": ["extendActions:", "appendAction:", "includeAction:"]}'.
+							'Text' -> nil.
+							'Action' -> 'Propose renames for method'} asDictionary.
 				GtLlmTutorActionExample new
 					input: {'Action' -> 'Propose renames for method'.
 							'Smalltalk method'
 								-> 'ClassWithNumber
 increment
 	self number: self number + 1'} asDictionary;
-					output: {'Action' -> 'Propose renames for method'.
-							'Text' -> nil.
-							'Renames'
-								-> '{"type": "method", "original": "increment", "proposals": ["incrementNumber", "inc", "incNum"]}'.
-							'Smalltalk method'
+					output: {'Smalltalk method'
 								-> 'ClassWithNumber
 increment
-	self number: self number + 1'} asDictionary.
+	self number: self number + 1'.
+							'Renames'
+								-> '{"type": "method", "original": "increment", "proposals": ["incrementNumber", "inc", "incNum"]}'.
+							'Text' -> nil.
+							'Action' -> 'Propose renames for method'} asDictionary.
 				GtLlmTutorActionExample new
 					input: {'Action' -> 'Propose renames for method'.
 							'Smalltalk method'
 								-> 'Object
 do: aMessage to: anObject
 	^ anObject perform: aMessage'} asDictionary;
-					output: {'Action' -> 'Propose renames for method'.
-							'Text' -> nil.
-							'Renames'
-								-> '{"type": "method", "original": "do:to:", "proposals": ["perform:on:", "send:to:", "execute:on:", "exec:on:", "ask:of:"]}'.
-							'Smalltalk method'
+					output: {'Smalltalk method'
 								-> 'Object
 do: aMessage to: anObject
 	^ anObject perform: aMessage
-'} asDictionary}
+'.
+							'Renames'
+								-> '{"type": "method", "original": "do:to:", "proposals": ["perform:on:", "send:to:", "execute:on:", "exec:on:", "ask:of:"]}'.
+							'Text' -> nil.
+							'Action' -> 'Propose renames for method'} asDictionary}
 ]
 
 { #category : #accessing }
@@ -212,7 +216,7 @@ GtOpenAICoderActionTutor >> renameVariableAction [
 		name: 'Propose renames for variable';
 		priority: 4;
 		description: 'Proposes a sensible number of alternative names for a given variable (less than ten, but more than one). Always return the action name, renames, and method.';
-		format: 'Propose renames for variable ``';
+		format: 'Propose renames for variable `{1}`';
 		examples: {GtLlmTutorActionExample new
 					input: {'Action' -> 'Propose renames for variable `aNumber`'.
 							'Smalltalk method'
@@ -294,21 +298,4 @@ isPowerOfTwo
 isPowerOfTwo
 	"Return true if the receiver is an integral power of two."
 	^ self ~= 0 and: [(self bitAnd: self-1) = 0]'} asDictionary}
-]
-
-{ #category : #accessing }
-GtOpenAICoderActionTutor >> textFormatComponent [
-	<gtLlmFormatComponent>
-	^ GtLlmTutorFormatComponent new
-		name: 'Text';
-		priority: 2;
-		format: 'Text';
-		example: '```
-This node contains plain text.
-Multiple lines, multiple paragraphs are allowed.
-
-*markup* may also **be used**. `Code` can be highlighted, and code blocks may be used.
-
-# Headings exist as well
-```'
 ]

@@ -19,7 +19,9 @@ GtOpenAIBlogPostAssistantThreadMessage >> gtBlogPostDiffFor: aView [
 	<gtView>
 	<gtLlmMessageView>
 	self blogPost ifEmpty: [ ^ aView empty ].
-
+	self isUserRole ifTrue: [ ^ aView empty ].
+	self action = 'Review the blog post' ifFalse: [ ^ aView empty ].
+	
 	^ aView explicit
 		title: 'Blog post diff';
 		priority: 1;
@@ -31,7 +33,8 @@ GtOpenAIBlogPostAssistantThreadMessage >> gtBlogPostFor: aView [
 	<gtView>
 	<gtLlmMessageView>
 	self blogPost ifEmpty: [ ^ aView empty ].
-
+	self action = 'Review the blog post' ifFalse: [ ^ aView empty ].
+	
 	^ aView textEditor
 		title: 'Blog post';
 		priority: 1;
@@ -43,22 +46,4 @@ GtOpenAIBlogPostAssistantThreadMessage >> gtBlogPostFor: aView [
 					allChildrenBreadthFirstDetect: [ :anElement | anElement isKindOf: BrEditor ]
 					ifFound: [ :anEditor | 
 						self chat pipeline instance content: anEditor text asString ] ]
-]
-
-{ #category : #'as yet unclassified' }
-GtOpenAIBlogPostAssistantThreadMessage >> gtReviewFor: aView [
-	<gtView>
-	<gtLlmMessageView>
-	self review ifEmpty: [ ^ aView empty ].
-
-	^ aView textEditor
-		title: 'Review';
-		priority: 2;
-		text: [ self review ];
-		styler: (GtLlmMessageStyler new threadMessageViewModel: self asViewModel)
-]
-
-{ #category : #'as yet unclassified' }
-GtOpenAIBlogPostAssistantThreadMessage >> review [
-	^ self contentJson at: 'Review' ifAbsent: [ '' ]
 ]
