@@ -20,12 +20,13 @@ GtOpenAIAnnotatedActionTutor >> chatAction [
 		name: 'Answer a chat request';
 		priority: 1;
 		description: 'Answers a chat request using the text field.';
-		format: 'Chat request: {1}'
-]
-
-{ #category : #'as yet unclassified' }
-GtOpenAIAnnotatedActionTutor >> chatClass [
-	^ GtOpenAIActionAssistantChat
+		format: 'Chat request: {1}';
+		examples: {GtLlmTutorActionExample new markUnverified
+					input: {'Action' -> 'Chat request: How are you?'} asDictionary;
+					output: {'Action' -> 'Answer a chat request'.
+							'Text'
+								-> 'As an AI model, I do not have feelings. How can I assist you today?'}
+							asDictionary}
 ]
 
 { #category : #accessing }
@@ -117,7 +118,8 @@ GtOpenAIAnnotatedActionTutor >> gtActionsFor: aView [
  		priority: 1;
  		description: '''';
  		examples: {}'.
-				methodCoder ]
+				methodCoder ];
+		actionUpdateButton
 ]
 
 { #category : #accessing }
@@ -170,7 +172,8 @@ GtOpenAIAnnotatedActionTutor >> gtFormatComponentsFor: aView [
 		priority: 1;
 		format: '''';
 		example: '''''.
-				methodCoder ]
+				methodCoder ];
+		actionUpdateButton
 ]
 
 { #category : #accessing }
@@ -218,7 +221,9 @@ GtOpenAIAnnotatedActionTutor >> instructions [
 
 { #category : #'as yet unclassified' }
 GtOpenAIAnnotatedActionTutor >> recomputeActions [
-	actions removeAll addAll: self collectActions
+	actions removeAll addAll: self collectActions.
+	
+	self initializeInstructionSections
 ]
 
 { #category : #'as yet unclassified' }
@@ -236,4 +241,22 @@ Multiple lines, multiple paragraphs are allowed.
 
 # Headings exist as well
 ```'
+]
+
+{ #category : #'as yet unclassified' }
+GtOpenAIAnnotatedActionTutor >> textValuePipelineFor: post withName: aString [
+	self
+		addFormatComponent: (GtLlmTutorFormatComponent new
+				name: aString;
+				format: 'Text';
+				example: '').
+	self valuePipelineFor: post withName: aString
+]
+
+{ #category : #'as yet unclassified' }
+GtOpenAIAnnotatedActionTutor >> valuePipelineFor: post withName: aString [
+	self
+		valuePipelineFor: (GtLlmValueHolder new
+				name: aString;
+				content: post)
 ]

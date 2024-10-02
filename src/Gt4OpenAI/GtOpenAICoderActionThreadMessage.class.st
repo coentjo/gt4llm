@@ -29,7 +29,7 @@ GtOpenAICoderActionThreadMessage >> gtCodeFor: aView [
 	self smalltalkMethodCodeBlock ifNil: [ ^ aView empty ].
 
 	^ aView explicit
-		title: 'Coder';
+		title: 'Method';
 		priority: 1;
 		stencil: [ | methodSource coder |
 			methodSource := self smalltalkMethodSource.
@@ -42,7 +42,7 @@ GtOpenAICoderActionThreadMessage >> gtCodeFor: aView [
 				compareSourceFrom: methodSource methodSource
 				to: coder currentSourceString)
 				ifFalse: [ coder currentSourceString: methodSource methodSource ].
-			coder asElement ]
+			coder asExpandedOnlyElement vFitContentLimited]
 ]
 
 { #category : #accessing }
@@ -68,14 +68,11 @@ GtOpenAICoderActionThreadMessage >> gtDiffFor: aView [
 	diff := self diffSourceFrom: expected to: actual.
 	diff changes ifEmpty: [ ^ aView empty ].
 
-	^ aView explicit
+	^ aView diff
 		title: 'Diff';
 		priority: 2;
-		stencil: [ GtDiffElementWithLabelStencil new
-				fromLabelText: 'Current:';
-				toLabelText: 'Change:';
-				change: diff;
-				styler: GtCodeDiffRBTextStyler new ]
+		from: [ expected ];
+		to: [ actual ]
 ]
 
 { #category : #accessing }
@@ -141,7 +138,7 @@ GtOpenAICoderActionThreadMessage >> gtTextFor: aView [
 
 	^ aView textEditor
 		title: 'Text';
-		priority: 2;
+		priority: 0;
 		text: [ self textCodeBlock ];
 		styler: (GtLlmMessageStyler new threadMessageViewModel: self)
 ]

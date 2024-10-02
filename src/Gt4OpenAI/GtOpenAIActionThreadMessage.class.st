@@ -9,6 +9,11 @@ GtOpenAIActionThreadMessage >> action [
 	^ self contentJson at: 'Action' ifAbsent: [ '' ]
 ]
 
+{ #category : #'as yet unclassified' }
+GtOpenAIActionThreadMessage >> actionModel [
+	^ self chat tutor actionNamed: self actionName
+]
+
 { #category : #accessing }
 GtOpenAIActionThreadMessage >> actionName [
 	^ self contentJson at: 'Action' ifAbsent: [ '' ]
@@ -48,7 +53,7 @@ GtOpenAIActionThreadMessage >> gtContentFor: aView [
 { #category : #accessing }
 GtOpenAIActionThreadMessage >> gtInspectActionFor: anAction [
 	<gtLlmAction>
-	(self chat tutor actionNamed: self actionName) ifNil: [ ^ anAction noAction ].
+	self actionModel ifNil: [ ^ anAction noAction ].
 
 	^ anAction button
 		priority: 1;
@@ -86,6 +91,30 @@ GtOpenAIActionThreadMessage >> gtPromoteToExampleActionFor: anAction [
 ]
 
 { #category : #accessing }
+GtOpenAIActionThreadMessage >> gtReifyActionFor: anAction [
+	<gtLlmAction>
+	(self isAssistantRole
+		and: [ self action = 'Answer a chat request'
+				or: [ (self action beginsWith: 'Chat request: ') or: [ self actionModel isNil ] ] ])
+		ifFalse: [ ^ anAction noAction ].
+
+	^ anAction dropdown
+		priority: 5;
+		label: 'Reify action';
+		content: [ :anElement | 
+			GtLlmActionTemplateElement new
+				example: (GtLlmTutorActionExample new
+						input: self ancestor contentJson;
+						output: self contentJson);
+				onActionCreated: [ :action | 
+					self chat tutor class compile: action.
+					self chat tutor recomputeActions.
+					anElement phlow fireToolUpdateWish.
+					anElement fireEvent: BrDropdownHideWish new ];
+				padding: (BlInsets all: 5) ]
+]
+
+{ #category : #accessing }
 GtOpenAIActionThreadMessage >> gtReifyMessageActionFor: anAction [
 	<gtLlmAction>
 	^ anAction dropdown
@@ -106,7 +135,9 @@ GtOpenAIActionThreadMessage >> gtTextFor: aView [
 
 	^ aView textEditor
 		title: 'Text';
-		priority: 2;
+		priority: 1;
+		styler: (GtLlmMessageStyler new
+				threadMessageViewModel: (GtLlmNewThreadMessageViewModel new threadMessage: GtLlmNewThreadMessage new));
 		text: [ self textBlock ]
 ]
 

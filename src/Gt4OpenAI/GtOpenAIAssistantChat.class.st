@@ -151,7 +151,7 @@ GtOpenAIAssistantChat >> gtMessagesWidgetFor: aView [
 	| aViewModel |
 	^ aView explicit
 		title: 'Chat';
-		priority: 0;
+		priority: -1;
 		stencil: [ aViewModel
 				ifNil: [ aViewModel := self asViewModel ].
 			GtLlmChatElement new assistantChatViewModel: aViewModel ];
@@ -210,7 +210,7 @@ GtOpenAIAssistantChat >> messages [
 	givenMessages := thread updateMessages.
 	^ givenMessages
 		collect: [ :aMessage | 
-			(self tutor messageClass from: aMessage serialize)
+			((self tutor messageClassFor: aMessage) from: aMessage serialize)
 				pipeline: self pipeline;
 				chat: self ]
 ]

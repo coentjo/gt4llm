@@ -29,6 +29,8 @@ GtLlmTutorAction >> asExpression [
 		, ';
 		description: ''' , self description
 		, ''';
+		format: ''' , self format
+		, ''';
 		examples: {' , ('.
 			' join: (self examples collect: #asExpression)) , '}'
 ]
@@ -228,7 +230,7 @@ GtLlmTutorAction >> name [
 { #category : #accessing }
 GtLlmTutorAction >> name: anObject [
 	name := anObject.
-	self format ifNil: [ self format: name ]
+	self format isEmptyOrNil ifTrue: [ self format: name ]
 ]
 
 { #category : #accessing }
