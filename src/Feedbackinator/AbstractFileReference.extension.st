@@ -1,6 +1,24 @@
 Extension { #name : #AbstractFileReference }
 
 { #category : #'*Feedbackinator' }
+AbstractFileReference >> gtDiffFor: aView [
+	<gtView>
+	| eventLoop |
+	self isFile ifFalse: [ ^ aView empty ].
+	[ self readStreamDo: [ :s | s next: 1000 ] ]
+		on: ZnInvalidUTF8
+		do: [ ^ aView empty ].
+
+	eventLoop := self watcher startLoop.
+
+	^ aView diff
+		title: 'diff' translated;
+		priority: 60;
+		from: [self contents];
+		to: [ (self parent / 'someplan.md' ) contents ]
+]
+
+{ #category : #'*Feedbackinator' }
 AbstractFileReference >> gtFeedbackFor: aView [
 	<gtView>
 	| eventLoop |
