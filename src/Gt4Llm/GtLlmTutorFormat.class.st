@@ -10,6 +10,7 @@ Class {
 
 { #category : #accessing }
 GtLlmTutorFormat >> actionComponent [
+	<gtLlmFormatComponent>
 	^ GtLlmTutorFormatComponent new beRequired
 		name: 'Action';
 		format: 'Text';
@@ -76,7 +77,7 @@ GtLlmTutorFormat >> communicationConventionsDescription [
 
 { #category : #accessing }
 GtLlmTutorFormat >> componentNamed: aName [
-	^ components detect: [ :aComponent | aComponent name = aName ]
+	^ components detect: [ :aComponent | aComponent name = aName ] ifNone: [ nil ]
 ]
 
 { #category : #accessing }

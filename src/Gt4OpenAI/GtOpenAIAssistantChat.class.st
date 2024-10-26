@@ -73,6 +73,11 @@ GtOpenAIAssistantChat >> checkerInstance: anObject [
 	pipeline instance: anObject
 ]
 
+{ #category : #'as yet unclassified' }
+GtOpenAIAssistantChat >> client [
+	^ self assistant client
+]
+
 { #category : #accessing }
 GtOpenAIAssistantChat >> future [
 	^ future
@@ -80,7 +85,7 @@ GtOpenAIAssistantChat >> future [
 
 { #category : #accessing }
 GtOpenAIAssistantChat >> getRun [
-	lastRun := self assistant client getRun: lastRun id forThread: thread id.
+	lastRun := self client getRun: lastRun id forThread: thread id.
 
 	self announcer
 		announce: (GtOpenAIThreadRunUpdatedAnnouncement new run: lastRun).
@@ -126,8 +131,8 @@ GtOpenAIAssistantChat >> gtInstanceFor: aView [
 	^ aView forward
 		title: 'Instance';
 		priority: 1;
-		object: [ pipeline ];
-		view: #gtInstanceFor:
+		object: [ self instance ];
+		view: #gtLiveFor:
 ]
 
 { #category : #accessing }
@@ -182,6 +187,16 @@ GtOpenAIAssistantChat >> initialize [
 	files := GtOpenAIFilesGroup new
 ]
 
+{ #category : #accessing }
+GtOpenAIAssistantChat >> instance [
+	^ pipeline instance
+]
+
+{ #category : #'as yet unclassified' }
+GtOpenAIAssistantChat >> instanceContent [
+	^ self pipeline instance content
+]
+
 { #category : #'as yet unclassified' }
 GtOpenAIAssistantChat >> instructions [
 	^ assistant instructions
@@ -201,6 +216,11 @@ GtOpenAIAssistantChat >> lastUpdate [
 { #category : #accessing }
 GtOpenAIAssistantChat >> maximumMessageSize [
 	^ 30000
+]
+
+{ #category : #'as yet unclassified' }
+GtOpenAIAssistantChat >> messageFromString: aString [
+	^ aString
 ]
 
 { #category : #accessing }
@@ -247,15 +267,9 @@ GtOpenAIAssistantChat >> runFuture [
 ]
 
 { #category : #accessing }
-GtOpenAIAssistantChat >> sendMessage: aString [
-	| aMessage output |
-	output := aString.
-	output size > self maximumMessageSize
-		ifTrue: [ output := output first: self maximumMessageSize ].
-	aMessage := GtLlmUserMessage new content: output.
-
-	assistant client addMessage: aMessage toThread: thread id.
-	lastRun := assistant client
+GtOpenAIAssistantChat >> sendAssistantMessage: aMessage [
+	self client addMessage: aMessage toThread: thread id.
+	lastRun := self client
 			createRunForThread: thread id
 			usingAssistant: assistant id
 			andResponseFormat: self responseFormat.
@@ -266,6 +280,17 @@ GtOpenAIAssistantChat >> sendMessage: aString [
 	future := (self runFuture
 			then: [ :aRun | self announcer announce: (GtOpenAIThreadRunIsDoneAnnouncement new run: aRun) ])
 			await: GtOpenAIUtilities executionConfiguration
+]
+
+{ #category : #accessing }
+GtOpenAIAssistantChat >> sendMessage: aString [
+	| aMessage output |
+	output := aString.
+	output size > self maximumMessageSize
+		ifTrue: [ output := output first: self maximumMessageSize ].
+	aMessage := GtLlmUserMessage new content: output.
+	
+	self sendAssistantMessage: aMessage
 ]
 
 { #category : #accessing }
@@ -294,6 +319,12 @@ GtOpenAIAssistantChat >> tutor [
 { #category : #accessing }
 GtOpenAIAssistantChat >> tutor: anObject [
 	tutor := anObject
+]
+
+{ #category : #accessing }
+GtOpenAIAssistantChat >> updateAssistant: anObject [
+	"same as #assistant:, but no hook"
+	assistant := anObject
 ]
 
 { #category : #accessing }

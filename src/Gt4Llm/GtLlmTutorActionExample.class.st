@@ -23,20 +23,20 @@ GtLlmTutorActionExample >> action: anObject [
 ]
 
 { #category : #'as yet unclassified' }
-GtLlmTutorActionExample >> asExpression [
+GtLlmTutorActionExample >> asExpressionSource [
 	^ self class name asString
 		, ' new
 	input: { '
 		, ('. '
 				join: (self input associations
-						collect: [ :aPair | '''' , aPair key , ''' -> ''' , aPair value , '''' ]))
+						collect: [ :aPair | '''' , aPair key , ''' -> ' , (aPair value ifNil: [ 'nil' ] ifNotNil: #storeString) ]))
 		, ' } asDictionary;
 	output: { '
 		, ('. '
 				join: (self output associations
 						collect: [ :aPair | 
 							'''' , aPair key , ''' -> '
-								, (aPair value ifNil: [ 'nil' ] ifNotNil: #surroundedBySingleQuotes) ]))
+								, (aPair value ifNil: [ 'nil' ] ifNotNil: #storeString) ]))
 		, ' } asDictionary'
 ]
 
@@ -45,7 +45,7 @@ GtLlmTutorActionExample >> asInstruction [
 	^ GtLlmInstructionSection new
 		source: self;
 		title: 'Example';
-		body: (GtLlmCompositeInstruction new
+		body: (GtLlmInstructionComposite new
 				addItem: (GtLlmInstructionSection new
 						source: self;
 						title: 'Prompt';

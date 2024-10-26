@@ -45,7 +45,7 @@ GtOpenAIThreadMessage >> ancestor [
 GtOpenAIThreadMessage >> annotations [
 	^ annotations
 		ifNil: [ annotations := GtOpenAIAnnotationsGroup
-					withAll: (content
+					withAll: ((content select: [ :aValue | (aValue at: 'type') = 'text' ])
 							flatCollect: [ :aValue | 
 								(aValue at: #text at: #annotations)
 									collect: [ :anAnnotation | (GtOpenAIAnnotation from: anAnnotation) client: self client ] ]) ]
@@ -121,13 +121,20 @@ GtOpenAIThreadMessage >> content: anObject [
 ]
 
 { #category : #accessing }
+GtOpenAIThreadMessage >> contentJson [
+	self contentText ifEmpty: [ ^ {} asDictionary ].
+	^ STONJSON fromString: self contentText
+]
+
+{ #category : #accessing }
 GtOpenAIThreadMessage >> contentSummary [
 	^ self contentText lines ifEmpty: [ '' ] ifNotEmpty: #first
 ]
 
 { #category : #accessing }
 GtOpenAIThreadMessage >> contentText [
-	^ '' join: (content collect: [ :aValue | aValue at: #text at: #value ])
+	^ ''
+		join: (content collect: [ :aValue | (aValue at: #text at: #value) ifNil: [ '' ] ])
 ]
 
 { #category : #accessing }
@@ -191,7 +198,7 @@ GtOpenAIThreadMessage >> gtJsonDataFor: aView context: aContext [
 	self chat responseFormat ifNil: [ ^ aView empty ].
 	self contentText ifEmpty: [ ^ aView empty ].
 
-	^ ((STONJSON fromString: self contentText) gtTreeFor: aView context: aContext)
+	^ (self contentJson gtTreeFor: aView context: aContext)
 		title: 'JSON data';
 		priority: 4.5
 ]
@@ -208,6 +215,21 @@ GtOpenAIThreadMessage >> gtJsonFor: aView [
 		text: [ self contentText ];
 		styler: JSONParser gtStyler;
 		aptitude: BrGlamorousCodeEditorAptitude
+]
+
+{ #category : #'as yet unclassified' }
+GtOpenAIThreadMessage >> gtMessageFilesFor: aView [
+	<gtView>
+	<gtLlmMessageView>
+	| messageFiles |
+	messageFiles := self messageFiles.
+
+	messageFiles ifEmpty: [ ^ aView empty ].
+
+	"for some reason we need this instead of a forward for the layout in the message to work"
+	^ (messageFiles gtFilesFor: aView) 
+		title: 'Message files';
+		priority: 10
 ]
 
 { #category : #testing }
@@ -243,6 +265,14 @@ GtOpenAIThreadMessage >> isSystemRole [
 { #category : #testing }
 GtOpenAIThreadMessage >> isUserRole [
 	^ self role = #user
+]
+
+{ #category : #'as yet unclassified' }
+GtOpenAIThreadMessage >> messageFiles [
+	^ GtOpenAIFilesGroup
+		withAll: (self content
+				select: [ :aValue | aValue type = 'image_file' ]
+				thenCollect: [ :aValue | self chat assistant client getFile: (aValue at: 'image_file' at: 'file_id') ])
 ]
 
 { #category : #accessing }

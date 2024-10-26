@@ -20,19 +20,19 @@ GtLlmTutorAction >> addExample: anExample [
 ]
 
 { #category : #'as yet unclassified' }
-GtLlmTutorAction >> asExpression [
+GtLlmTutorAction >> asExpressionSource [
 	^ self class name asString
 		, ' new
-	name: ''' , self name
-		, ''';
+	name: ' , self name storeString
+		, ';
 	priority: ' , self priority asString
 		, ';
-		description: ''' , self description
-		, ''';
-		format: ''' , self format
-		, ''';
+		description: ' , self description storeString
+		, ';
+		format: ' , self format storeString
+		, ';
 		examples: {' , ('.
-			' join: (self examples collect: #asExpression)) , '}'
+			' join: (self examples collect: #asExpressionSource)) , '}'
 ]
 
 { #category : #accessing }
@@ -40,12 +40,22 @@ GtLlmTutorAction >> asInstruction [
 	^ GtLlmInstructionSection new
 		source: self;
 		title: self name;
-		body: (GtLlmCompositeInstruction new
+		body: (GtLlmInstructionComposite new
 				addItem: self description;
 				addItem: (GtLlmInstructionSection new
 						source: self;
 						title: 'Examples';
-						body: (GtLlmCompositeInstruction new items: self examples)))
+						body: (GtLlmInstructionComposite new items: self examples)))
+]
+
+{ #category : #'as yet unclassified' }
+GtLlmTutorAction >> asMethodSource [
+	| methodSource |
+	methodSource := self definingMethod selector asString
+			, '
+	<gtLlmTutorAction>
+	^ ' , self asExpressionSource.
+	^ methodSource
 ]
 
 { #category : #accessing }
@@ -142,11 +152,16 @@ GtLlmTutorAction >> formatReferences [
 { #category : #'as yet unclassified' }
 GtLlmTutorAction >> gtDefinitionFor: aView [
 	<gtView>
-	^ aView forward
+	^ aView explicit
 		title: 'Definition';
 		priority: 1;
-		object: [ definingMethod ];
-		view: #gtSourceFor:
+		actionButtonIcon: BrGlamorousVectorIcons browse
+			tooltip: 'Browse method'
+			action: [ self definingMethod gtBrowse ];
+		stencil: [ | coder |
+			coder := GtPharoMethodCoder forMethod: self definingMethod.
+			coder addOns addStyler: (GtLlmTutorFormatStyler new tutor: self tutor).
+			coder asExpandedOnlyElement vFitContentLimited ]
 ]
 
 { #category : #accessing }
@@ -256,13 +271,11 @@ GtLlmTutorAction >> outputReferences [
 
 { #category : #'as yet unclassified' }
 GtLlmTutorAction >> persist [
+	| methodSource |
+	methodSource := self asMethodSource.
+
 	self definingMethod methodClass
-		compile: (RBConfigurableFormatter
-				format: (RBParser
-						parseMethod: self definingMethod selector asString
-								, '
-	<gtLlmTutorAction>
-	^ ' , self asExpression)).
+		compile: (RBConfigurableFormatter format: (RBParser parseMethod: methodSource)).
 	definingMethod := self definingMethod methodClass
 			>> self definingMethod selector
 ]

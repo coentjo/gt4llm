@@ -20,12 +20,6 @@ GtOpenAIActionThreadMessage >> actionName [
 ]
 
 { #category : #accessing }
-GtOpenAIActionThreadMessage >> contentJson [
-	self contentText ifEmpty: [ ^ {} asDictionary ].
-	^ STONJSON fromString: self contentText
-]
-
-{ #category : #accessing }
 GtOpenAIActionThreadMessage >> contentSummary [
 	^ self action
 ]
@@ -40,7 +34,13 @@ GtOpenAIActionThreadMessage >> gtActionFor: aView [
 		title: 'Action';
 		priority: 3;
 		text: [ self action ];
-		actionButtonLabel: 'Action' action: [ :aButton | aButton phlow spawnObject: (self chat tutor actionNamed: self action) ]
+		actionButtonLabel: 'Action'
+			action: [ :aButton | aButton phlow spawnObject: (self chat tutor actionNamed: self action) ];
+		styler: [ BlCompositeStyler new
+				stylers: {GtLlmMessageStyler new threadMessageViewModel: self asViewModel.
+						GtOpenAITraceStyler new.
+						GtOpenAIThreadMessageStyler new annotations: self annotations.
+						GtLlmTutorFormatTextStyler new tutor: self chat tutor} ]
 ]
 
 { #category : #accessing }
@@ -123,7 +123,11 @@ GtOpenAIActionThreadMessage >> gtReifyMessageActionFor: anAction [
 		content: [ :aButton | 
 			(GtLlmReificationForm new
 				message: self;
-				onAccept: [ :aValue | aButton phlow spawnObject: self chat ]) asElement
+				onAccept: [ :aValue | 
+					aButton
+						enqueueTask: (BlTaskAction new
+								action: [ aButton phlow fireToolUpdateWish.
+									aButton fireEvent: BrDropdownHideWish new ]) ]) asElement
 				margin: (BlInsets all: 5) ]
 ]
 

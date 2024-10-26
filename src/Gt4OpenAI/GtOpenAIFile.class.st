@@ -34,6 +34,13 @@ GtOpenAIFile >> bytes: anObject [
 	bytes := anObject
 ]
 
+{ #category : #'as yet unclassified' }
+GtOpenAIFile >> contents [
+	^ (FileSystem memory / self filename) ensureCreateFile
+		binaryWriteStreamDo: [ :aStream | aStream nextPutAll: (self client getFileContents: self id) ];
+		yourself
+]
+
 { #category : #accessing }
 GtOpenAIFile >> createdAt [
 	^ createdAt
@@ -52,6 +59,20 @@ GtOpenAIFile >> filename [
 { #category : #accessing }
 GtOpenAIFile >> filename: anObject [
 	filename := anObject
+]
+
+{ #category : #'as yet unclassified' }
+GtOpenAIFile >> gtFileFor: aView [
+	<gtView>
+	^ aView explicit
+		title: 'File';
+		priority: 1;
+		stencil: [ (self contents gtViewsFor: GtPhlowEmptyView new)
+				asElementDo: [ :e | 
+					e
+						margin: (BlInsets all: 15);
+						background: Color white;
+						addAptitude: BrShadowAptitude ] ]
 ]
 
 { #category : #accessing }

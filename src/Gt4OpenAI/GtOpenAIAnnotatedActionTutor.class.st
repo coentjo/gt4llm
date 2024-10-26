@@ -53,9 +53,43 @@ GtOpenAIAnnotatedActionTutor >> defaultAssistantDescription [
 	^ 'Is an action-based tutor (more information in the prompt instructions).'
 ]
 
-{ #category : #accessing }
-GtOpenAIAnnotatedActionTutor >> formatComponentNamed: aName [
-	^ format componentNamed: aName
+{ #category : #'as yet unclassified' }
+GtOpenAIAnnotatedActionTutor >> ensureComponentIsNotReferenced: aFormatComponent [
+	self actions
+		do: [ :anAction | 
+			anAction definingMethod methodClass = self class
+				ifTrue: [ anAction examples
+						do: [ :anExample | anExample output removeKey: aFormatComponent name ifAbsent: [  ] ].
+					anAction persist ] ]
+]
+
+{ #category : #'as yet unclassified' }
+GtOpenAIAnnotatedActionTutor >> ensureComponentIsReferenced: aFormatComponent [
+	self actions
+		do: [ :anAction | 
+			anAction definingMethod methodClass = self class
+				ifTrue: [ anAction examples
+						do: [ :anExample | anExample output at: aFormatComponent name put: nil ].
+					anAction persist ] ]
+]
+
+{ #category : #'as yet unclassified' }
+GtOpenAIAnnotatedActionTutor >> formatComponentMethodCoderForSource: aString [
+	| methodCoder |
+	methodCoder := GtPharoNewMethodCoderElement new
+			behavior: self class;
+			onMethodCoderSaved: [ :anAnnouncement | 
+				| method formatComponent |
+				method := anAnnouncement method.
+				formatComponent := self perform: method selector.
+				self ensureComponentIsReferenced: formatComponent.
+				self initializeFormat.
+				self recomputeActions.
+				methodCoder phlow fireToolUpdateWish.
+				methodCoder fireEvent: BrDropdownHideWish new ];
+			ensureMethodCoderViewModel.
+	methodCoder pharoMethodCoderViewModel coderModel currentSourceString: aString.
+	^ methodCoder
 ]
 
 { #category : #accessing }
@@ -151,28 +185,21 @@ GtOpenAIAnnotatedActionTutor >> gtFormatComponentsFor: aView [
 					action: [ :aButton | 
 						self format components remove: anItem.
 						anItem definingMethod removeFromSystem.
+						self ensureComponentIsNotReferenced: anItem.
+						self recomputeActions.
 						aButton phlow fireToolUpdateWish ] ]
 			width: 70;
 		actionDropdownButtonIcon: BrGlamorousVectorIcons add
 			tooltip: 'Add action'
 			content: [ :anElement | 
-				| methodCoder |
-				methodCoder := GtPharoNewMethodCoderElement new
-						behavior: self class;
-						methodCoderViewModelValueHolder: valueHolder;
-						onMethodCoderSaved: [ self initializeFormat.
-							anElement phlow fireToolUpdateWish.
-							anElement fireEvent: BrDropdownHideWish new ];
-						ensureMethodCoderViewModel.
-				methodCoder pharoMethodCoderViewModel coderModel
-					currentSourceString: 'gtFORMATCOMPONENTNAME
+				(self
+					formatComponentMethodCoderForSource: 'gtFORMATCOMPONENTNAME
 	<gtLlmFormatComponent>
 	^ GtLlmTutorFormatComponent new
 		name: '''';
 		priority: 1;
 		format: '''';
-		example: '''''.
-				methodCoder ];
+		example: ''''') methodCoderViewModelValueHolder: valueHolder ];
 		actionUpdateButton
 ]
 
@@ -223,7 +250,9 @@ GtOpenAIAnnotatedActionTutor >> instructions [
 GtOpenAIAnnotatedActionTutor >> recomputeActions [
 	actions removeAll addAll: self collectActions.
 	
-	self initializeInstructionSections
+	self initializeInstructionSections.
+	
+	self recreateAssistant
 ]
 
 { #category : #'as yet unclassified' }
